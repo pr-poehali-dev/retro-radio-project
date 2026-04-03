@@ -5,6 +5,7 @@ import StationList from '@/components/StationList';
 import FavoritesTab from '@/components/FavoritesTab';
 import SettingsTab from '@/components/SettingsTab';
 import AddStationModal from '@/components/AddStationModal';
+import SearchModal from '@/components/SearchModal';
 import { DEFAULT_STATIONS, Station } from '@/data/stations';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 
@@ -22,6 +23,7 @@ export default function Index() {
   const [currentStation, setCurrentStation] = useState<Station | null>(null);
   const [tab, setTab] = useState<Tab>('stations');
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showSearchModal, setShowSearchModal] = useState(false);
 
   const toggleFav = (id: string) => {
     setFavorites(prev => prev.includes(id) ? prev.filter(f => f !== id) : [...prev, id]);
@@ -43,9 +45,13 @@ export default function Index() {
       style={{ background: 'radial-gradient(ellipse at 50% 30%, #2a1505 0%, #0d0602 100%)' }}
     >
       {showAddModal && (
-        <AddStationModal
+        <AddStationModal onAdd={handleAddStation} onClose={() => setShowAddModal(false)} />
+      )}
+      {showSearchModal && (
+        <SearchModal
           onAdd={handleAddStation}
-          onClose={() => setShowAddModal(false)}
+          onClose={() => setShowSearchModal(false)}
+          existingIds={stations.map(s => s.id)}
         />
       )}
 
@@ -87,11 +93,7 @@ export default function Index() {
               ))}
             </div>
           </div>
-
-          <Player
-            station={currentStation}
-            onDeleteBroken={handleDeleteStation}
-          />
+          <Player station={currentStation} onDeleteBroken={handleDeleteStation} />
         </div>
 
         <div className="wood-texture flex" style={{ height: 6 }}>
@@ -130,26 +132,38 @@ export default function Index() {
           <div className="overflow-y-auto" style={{ maxHeight: 380 }}>
             {tab === 'stations' && (
               <div className="p-4">
-                <button
-                  onClick={() => setShowAddModal(true)}
-                  className="w-full mb-3 py-2 rounded flex items-center justify-center gap-2 transition-all"
-                  style={{
-                    border: '1px dashed rgba(232,160,48,0.3)',
-                    color: 'var(--amber-dim)',
-                    background: 'rgba(232,160,48,0.03)',
-                  }}
-                  onMouseEnter={e => {
-                    e.currentTarget.style.borderColor = 'rgba(232,160,48,0.6)';
-                    e.currentTarget.style.color = 'var(--amber)';
-                  }}
-                  onMouseLeave={e => {
-                    e.currentTarget.style.borderColor = 'rgba(232,160,48,0.3)';
-                    e.currentTarget.style.color = 'var(--amber-dim)';
-                  }}
-                >
-                  <Icon name="Plus" size={13} />
-                  <span className="font-oswald text-xs tracking-widest uppercase">Добавить станцию</span>
-                </button>
+                {/* Action buttons */}
+                <div className="flex gap-2 mb-3">
+                  <button
+                    onClick={() => setShowSearchModal(true)}
+                    className="flex-1 py-2 rounded flex items-center justify-center gap-1.5 transition-all"
+                    style={{
+                      border: '1px solid rgba(232,160,48,0.35)',
+                      color: 'var(--amber)',
+                      background: 'rgba(232,160,48,0.08)',
+                    }}
+                    onMouseEnter={e => { e.currentTarget.style.background = 'rgba(232,160,48,0.15)'; }}
+                    onMouseLeave={e => { e.currentTarget.style.background = 'rgba(232,160,48,0.08)'; }}
+                  >
+                    <Icon name="Search" size={12} />
+                    <span className="font-oswald text-xs tracking-widest uppercase">Поиск в эфире</span>
+                  </button>
+                  <button
+                    onClick={() => setShowAddModal(true)}
+                    className="py-2 px-3 rounded flex items-center justify-center gap-1.5 transition-all"
+                    style={{
+                      border: '1px dashed rgba(232,160,48,0.25)',
+                      color: 'var(--amber-dim)',
+                      background: 'rgba(232,160,48,0.03)',
+                    }}
+                    onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(232,160,48,0.5)'; e.currentTarget.style.color = 'var(--amber)'; }}
+                    onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(232,160,48,0.25)'; e.currentTarget.style.color = 'var(--amber-dim)'; }}
+                    title="Добавить вручную"
+                  >
+                    <Icon name="Plus" size={13} />
+                  </button>
+                </div>
+
                 <StationList
                   stations={stations}
                   current={currentStation}

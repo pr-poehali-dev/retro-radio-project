@@ -1,0 +1,28 @@
+{
+  "tests": [
+    {
+      "name": "Search by name",
+      "method": "GET",
+      "path": "/?mode=search&q=jazz&limit=5",
+      "expectedStatus": 200,
+      "expectedBody": [],
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Search by tag",
+      "method": "GET",
+      "path": "/?mode=bytag&q=rock&limit=5",
+      "expectedStatus": 200,
+      "expectedBody": [],
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Missing query returns 400",
+      "method": "GET",
+      "path": "/",
+      "expectedStatus": 400,
+      "expectedBody": {"error": "query param 'q' is required"},
+      "bodyMatcher": "partial"
+    }
+  ]
+}

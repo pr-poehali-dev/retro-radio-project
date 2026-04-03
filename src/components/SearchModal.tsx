@@ -21,7 +21,7 @@ interface Props {
   existingIds: string[];
 }
 
-const API = 'https://de1.api.radio-browser.info/json';
+const API = 'https://functions.poehali.dev/71ab09dd-f52a-46ef-9e52-5feb82812e97';
 
 function guessGenre(tags: string, language: string): string {
   const t = (tags + ' ' + language).toLowerCase();
@@ -66,46 +66,36 @@ export default function SearchModal({ onAdd, onClose, existingIds }: Props) {
     inputRef.current?.focus();
   }, []);
 
-  const search = async (q: string) => {
-    if (!q.trim()) { setResults([]); return; }
+  const doFetch = async (mode: 'search' | 'bytag', q: string) => {
     abortRef.current?.abort();
     abortRef.current = new AbortController();
     setLoading(true);
     setError('');
     try {
       const res = await fetch(
-        `${API}/stations/search?name=${encodeURIComponent(q)}&limit=30&hidebroken=true&order=votes&reverse=true`,
+        `${API}?mode=${mode}&q=${encodeURIComponent(q)}&limit=30`,
         { signal: abortRef.current.signal }
       );
       if (!res.ok) throw new Error('API error');
       const data: RadioBrowserStation[] = await res.json();
-      setResults(data.filter(s => s.url_resolved && s.url_resolved.startsWith('http')));
+      setResults(data);
     } catch (e: unknown) {
-      if (e instanceof Error && e.name !== 'AbortError') setError('Не удалось получить результаты. Проверьте соединение.');
+      if (e instanceof Error && e.name !== 'AbortError') {
+        setError('Не удалось получить результаты. Попробуйте ещё раз.');
+      }
     } finally {
       setLoading(false);
     }
   };
 
-  const searchByTag = async (tag: string) => {
+  const search = (q: string) => {
+    if (!q.trim()) { setResults([]); return; }
+    doFetch('search', q);
+  };
+
+  const searchByTag = (tag: string) => {
     setQuery(tag);
-    abortRef.current?.abort();
-    abortRef.current = new AbortController();
-    setLoading(true);
-    setError('');
-    try {
-      const res = await fetch(
-        `${API}/stations/bytag/${encodeURIComponent(tag)}?limit=30&hidebroken=true&order=votes&reverse=true`,
-        { signal: abortRef.current.signal }
-      );
-      if (!res.ok) throw new Error();
-      const data: RadioBrowserStation[] = await res.json();
-      setResults(data.filter(s => s.url_resolved && s.url_resolved.startsWith('http')));
-    } catch (e: unknown) {
-      if (e instanceof Error && e.name !== 'AbortError') setError('Ошибка загрузки.');
-    } finally {
-      setLoading(false);
-    }
+    doFetch('bytag', tag);
   };
 
   useEffect(() => {

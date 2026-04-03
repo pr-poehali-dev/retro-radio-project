@@ -4,7 +4,8 @@ import Player from '@/components/Player';
 import StationList from '@/components/StationList';
 import FavoritesTab from '@/components/FavoritesTab';
 import SettingsTab from '@/components/SettingsTab';
-import { STATIONS, Station } from '@/data/stations';
+import AddStationModal from '@/components/AddStationModal';
+import { DEFAULT_STATIONS, Station } from '@/data/stations';
 
 type Tab = 'stations' | 'favorites' | 'settings';
 
@@ -15,42 +16,44 @@ const TABS: { id: Tab; label: string; icon: string }[] = [
 ];
 
 export default function Index() {
+  const [stations, setStations] = useState<Station[]>(DEFAULT_STATIONS);
   const [currentStation, setCurrentStation] = useState<Station | null>(null);
   const [favorites, setFavorites] = useState<string[]>([]);
   const [tab, setTab] = useState<Tab>('stations');
+  const [showAddModal, setShowAddModal] = useState(false);
 
   const toggleFav = (id: string) => {
-    setFavorites(prev =>
-      prev.includes(id) ? prev.filter(f => f !== id) : [...prev, id]
-    );
+    setFavorites(prev => prev.includes(id) ? prev.filter(f => f !== id) : [...prev, id]);
   };
 
-  const handleSelect = (s: Station) => {
-    setCurrentStation(s);
+  const handleAddStation = (s: Station) => {
+    setStations(prev => [...prev, s]);
+  };
+
+  const handleDeleteStation = (id: string) => {
+    setStations(prev => prev.filter(s => s.id !== id));
+    if (currentStation?.id === id) setCurrentStation(null);
+    setFavorites(prev => prev.filter(f => f !== id));
   };
 
   return (
     <div
       className="min-h-screen flex items-center justify-center p-4"
-      style={{
-        background: 'radial-gradient(ellipse at 50% 30%, #2a1505 0%, #0d0602 100%)',
-      }}
+      style={{ background: 'radial-gradient(ellipse at 50% 30%, #2a1505 0%, #0d0602 100%)' }}
     >
-      {/* Main body */}
+      {showAddModal && (
+        <AddStationModal
+          onAdd={handleAddStation}
+          onClose={() => setShowAddModal(false)}
+        />
+      )}
+
       <div
         className="w-full max-w-md rounded-xl overflow-hidden animate-scale-in"
-        style={{
-          boxShadow: '0 20px 60px rgba(0,0,0,0.8), 0 4px 20px rgba(0,0,0,0.5)',
-        }}
+        style={{ boxShadow: '0 20px 60px rgba(0,0,0,0.8), 0 4px 20px rgba(0,0,0,0.5)' }}
       >
         {/* Wood frame top */}
-        <div
-          className="wood-texture px-5 pt-5 pb-3"
-          style={{
-            borderBottom: '3px solid var(--wood-dark)',
-          }}
-        >
-          {/* Brand plate */}
+        <div className="wood-texture px-5 pt-5 pb-3" style={{ borderBottom: '3px solid var(--wood-dark)' }}>
           <div className="flex items-center justify-between mb-4">
             <div>
               <h1
@@ -63,23 +66,17 @@ export default function Index() {
               >
                 ВЭФ · 202
               </h1>
-              <div
-                className="font-mono text-[9px] tracking-widest"
-                style={{ color: 'rgba(255,200,80,0.4)', marginTop: -2 }}
-              >
+              <div className="font-mono text-[9px] tracking-widest" style={{ color: 'rgba(255,200,80,0.4)', marginTop: -2 }}>
                 ИНТЕРНЕТ РАДИОЛА · РИЖСКИЙ ЗАВОД
               </div>
             </div>
-
-            {/* Lamp decor */}
             <div className="flex items-center gap-2">
               {[1, 2].map(i => (
                 <div
                   key={i}
                   className="rounded-full animate-flicker"
                   style={{
-                    width: 16,
-                    height: 16,
+                    width: 16, height: 16,
                     background: 'radial-gradient(circle, rgba(255,200,80,0.6) 0%, rgba(200,100,0,0.3) 60%, transparent 100%)',
                     border: '1px solid rgba(200,134,10,0.4)',
                     boxShadow: '0 0 10px rgba(232,160,48,0.4), inset 0 0 4px rgba(255,200,80,0.3)',
@@ -89,24 +86,16 @@ export default function Index() {
               ))}
             </div>
           </div>
-
-          {/* Player */}
           <Player station={currentStation} />
         </div>
 
-        {/* Speaker grille sides */}
         <div className="wood-texture flex" style={{ height: 6 }}>
           <div className="grille flex-1" />
         </div>
 
-        {/* Bottom panel: tabs + content */}
         <div style={{ background: '#0f0905' }}>
-
           {/* Tab bar */}
-          <div
-            className="flex"
-            style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}
-          >
+          <div className="flex" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
             {TABS.map(t => (
               <button
                 key={t.id}
@@ -123,13 +112,7 @@ export default function Index() {
                 {t.id === 'favorites' && favorites.length > 0 && (
                   <span
                     className="font-mono text-[9px] rounded-full px-1"
-                    style={{
-                      background: 'var(--amber)',
-                      color: 'var(--wood-dark)',
-                      lineHeight: '14px',
-                      minWidth: 14,
-                      textAlign: 'center',
-                    }}
+                    style={{ background: 'var(--amber)', color: 'var(--wood-dark)', lineHeight: '14px', minWidth: 14, textAlign: 'center' }}
                   >
                     {favorites.length}
                   </span>
@@ -139,30 +122,58 @@ export default function Index() {
           </div>
 
           {/* Tab content */}
-          <div className="p-4 overflow-y-auto" style={{ maxHeight: 380 }}>
+          <div className="overflow-y-auto" style={{ maxHeight: 380 }}>
             {tab === 'stations' && (
-              <StationList
-                stations={STATIONS}
-                current={currentStation}
-                favorites={favorites}
-                onSelect={handleSelect}
-                onToggleFav={toggleFav}
-              />
+              <div className="p-4">
+                <button
+                  onClick={() => setShowAddModal(true)}
+                  className="w-full mb-3 py-2 rounded flex items-center justify-center gap-2 transition-all"
+                  style={{
+                    border: '1px dashed rgba(232,160,48,0.3)',
+                    color: 'var(--amber-dim)',
+                    background: 'rgba(232,160,48,0.03)',
+                  }}
+                  onMouseEnter={e => {
+                    e.currentTarget.style.borderColor = 'rgba(232,160,48,0.6)';
+                    e.currentTarget.style.color = 'var(--amber)';
+                  }}
+                  onMouseLeave={e => {
+                    e.currentTarget.style.borderColor = 'rgba(232,160,48,0.3)';
+                    e.currentTarget.style.color = 'var(--amber-dim)';
+                  }}
+                >
+                  <Icon name="Plus" size={13} />
+                  <span className="font-oswald text-xs tracking-widest uppercase">Добавить станцию</span>
+                </button>
+                <StationList
+                  stations={stations}
+                  current={currentStation}
+                  favorites={favorites}
+                  onSelect={setCurrentStation}
+                  onToggleFav={toggleFav}
+                  onDelete={handleDeleteStation}
+                />
+              </div>
             )}
             {tab === 'favorites' && (
-              <FavoritesTab
-                stations={STATIONS}
-                favorites={favorites}
-                current={currentStation}
-                onSelect={handleSelect}
-                onToggleFav={toggleFav}
-              />
+              <div className="p-4">
+                <FavoritesTab
+                  stations={stations}
+                  favorites={favorites}
+                  current={currentStation}
+                  onSelect={setCurrentStation}
+                  onToggleFav={toggleFav}
+                />
+              </div>
             )}
-            {tab === 'settings' && <SettingsTab />}
+            {tab === 'settings' && (
+              <div className="p-4">
+                <SettingsTab />
+              </div>
+            )}
           </div>
         </div>
 
-        {/* Bottom wood strip */}
         <div className="wood-texture" style={{ height: 12 }} />
       </div>
     </div>

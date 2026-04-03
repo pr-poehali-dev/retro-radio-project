@@ -7,9 +7,10 @@ interface Props {
   favorites: string[];
   onSelect: (s: Station) => void;
   onToggleFav: (id: string) => void;
+  onDelete?: (id: string) => void;
 }
 
-const GENRE_COLORS: Record<string, string> = {
+export const GENRE_COLORS: Record<string, string> = {
   'Джаз': '#e8a030',
   'Классика': '#a080d0',
   'Ретро': '#d06040',
@@ -17,10 +18,14 @@ const GENRE_COLORS: Record<string, string> = {
   'Культура': '#80a040',
   'Романсы': '#d04080',
   'Разговорное': '#80d0a0',
+  'Народная': '#c0a060',
+  'Электронная': '#40d0c0',
+  'Рок': '#d04040',
+  'Поп': '#d080c0',
   'Разное': '#a0a0a0',
 };
 
-export default function StationList({ stations, current, favorites, onSelect, onToggleFav }: Props) {
+export default function StationList({ stations, current, favorites, onSelect, onToggleFav, onDelete }: Props) {
   return (
     <div className="flex flex-col gap-1.5">
       {stations.map((s, i) => {
@@ -31,13 +36,11 @@ export default function StationList({ stations, current, favorites, onSelect, on
         return (
           <div
             key={s.id}
-            className={`station-card rounded px-3 py-2.5 flex items-center gap-3 border animate-fade-in`}
+            className="station-card rounded px-3 py-2.5 flex items-center gap-3 border animate-fade-in"
             style={{
               animationDelay: `${i * 40}ms`,
               borderColor: isCurrent ? 'var(--amber)' : 'rgba(255,255,255,0.06)',
-              background: isCurrent
-                ? 'rgba(232,160,48,0.1)'
-                : 'rgba(255,255,255,0.02)',
+              background: isCurrent ? 'rgba(232,160,48,0.1)' : 'rgba(255,255,255,0.02)',
               boxShadow: isCurrent ? '0 0 12px rgba(232,160,48,0.15)' : 'none',
             }}
             onClick={() => onSelect(s)}
@@ -58,11 +61,21 @@ export default function StationList({ stations, current, favorites, onSelect, on
 
             {/* Name & freq */}
             <div className="flex-1 min-w-0">
-              <div
-                className="font-oswald text-sm tracking-wide truncate"
-                style={{ color: isCurrent ? 'var(--amber-glow)' : 'hsl(var(--foreground))' }}
-              >
-                {s.name}
+              <div className="flex items-center gap-1.5">
+                <div
+                  className="font-oswald text-sm tracking-wide truncate"
+                  style={{ color: isCurrent ? 'var(--amber-glow)' : 'hsl(var(--foreground))' }}
+                >
+                  {s.name}
+                </div>
+                {s.custom && (
+                  <span
+                    className="font-mono text-[8px] px-1 rounded shrink-0"
+                    style={{ background: 'rgba(232,160,48,0.15)', color: 'var(--amber-dim)', border: '1px solid rgba(232,160,48,0.2)' }}
+                  >
+                    своя
+                  </span>
+                )}
               </div>
               <div className="flex items-center gap-2 mt-0.5">
                 <span className="font-mono text-[9px]" style={{ color: 'var(--amber-dim)' }}>
@@ -70,11 +83,7 @@ export default function StationList({ stations, current, favorites, onSelect, on
                 </span>
                 <span
                   className="text-[8px] px-1 rounded"
-                  style={{
-                    color: genreColor,
-                    background: `${genreColor}18`,
-                    border: `1px solid ${genreColor}30`,
-                  }}
+                  style={{ color: genreColor, background: `${genreColor}18`, border: `1px solid ${genreColor}30` }}
                 >
                   {s.genre}
                 </span>
@@ -107,8 +116,22 @@ export default function StationList({ stations, current, favorites, onSelect, on
               style={{ color: isFav ? '#e8a030' : 'rgba(255,255,255,0.2)' }}
               title={isFav ? 'Убрать из избранного' : 'В избранное'}
             >
-              <Icon name={isFav ? 'Star' : 'StarOff'} size={14} />
+              <Icon name={isFav ? 'Star' : 'StarOff'} size={13} />
             </button>
+
+            {/* Delete button — only for custom stations */}
+            {s.custom && onDelete && (
+              <button
+                onClick={e => { e.stopPropagation(); onDelete(s.id); }}
+                className="shrink-0 p-1 rounded transition-all"
+                style={{ color: 'rgba(255,80,80,0.35)' }}
+                title="Удалить станцию"
+                onMouseEnter={e => (e.currentTarget.style.color = 'rgba(255,80,80,0.8)')}
+                onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,80,80,0.35)')}
+              >
+                <Icon name="Trash2" size={13} />
+              </button>
+            )}
           </div>
         );
       })}

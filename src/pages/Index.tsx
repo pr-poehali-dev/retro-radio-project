@@ -6,6 +6,7 @@ import FavoritesTab from '@/components/FavoritesTab';
 import SettingsTab from '@/components/SettingsTab';
 import AddStationModal from '@/components/AddStationModal';
 import { DEFAULT_STATIONS, Station } from '@/data/stations';
+import { useLocalStorage } from '@/hooks/useLocalStorage';
 
 type Tab = 'stations' | 'favorites' | 'settings';
 
@@ -16,9 +17,9 @@ const TABS: { id: Tab; label: string; icon: string }[] = [
 ];
 
 export default function Index() {
-  const [stations, setStations] = useState<Station[]>(DEFAULT_STATIONS);
+  const [stations, setStations] = useLocalStorage<Station[]>('radiola_stations', DEFAULT_STATIONS);
+  const [favorites, setFavorites] = useLocalStorage<string[]>('radiola_favorites', []);
   const [currentStation, setCurrentStation] = useState<Station | null>(null);
-  const [favorites, setFavorites] = useState<string[]>([]);
   const [tab, setTab] = useState<Tab>('stations');
   const [showAddModal, setShowAddModal] = useState(false);
 
@@ -57,7 +58,7 @@ export default function Index() {
           <div className="flex items-center justify-between mb-4">
             <div>
               <h1
-                className="font-oswald text-2xl tracking-[0.2em] uppercase animate-flicker"
+                className="font-oswald text-2xl uppercase animate-flicker"
                 style={{
                   color: 'var(--amber-glow)',
                   textShadow: '0 0 20px var(--amber-glow), 0 0 40px rgba(232,160,48,0.3)',
@@ -86,7 +87,11 @@ export default function Index() {
               ))}
             </div>
           </div>
-          <Player station={currentStation} />
+
+          <Player
+            station={currentStation}
+            onDeleteBroken={handleDeleteStation}
+          />
         </div>
 
         <div className="wood-texture flex" style={{ height: 6 }}>
